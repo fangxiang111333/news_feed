@@ -319,7 +319,6 @@ class ZgqxbNewsSpider(CrawlSpider):
             Rule(LxmlLinkExtractor(allow=[url_pattern]), callback='parse_news', follow=True)
         ]
 
-
     def parse_news(self, response):
         sel = Selector(response)
         pattern = re.match(self.url_pattern, str(response.url))
@@ -327,15 +326,18 @@ class ZgqxbNewsSpider(CrawlSpider):
         date = pattern.group(2)
         date = date[0:4] + '/' + date[4:6] +'/' + date[6:]
         newsId = pattern.group(3)
+        #时间
         if sel.xpath('//span[@class ="l01 gray"]/text()'):
             time = sel.xpath('//span[@class ="l01 gray"]/text()').extract()[-1]
         else:
             time = "unknown"
+        #标题
         if sel.xpath('//strong/b/text()'):
             title = ListCombiner(sel.xpath('//strong/b/text()').extract())
         else:
             title = "unknown"
         url = response.url
+        #内容
         if sel.xpath('//div[@class="TRS_Editor"]/p/text()'):
             contents = ListCombiner(sel.xpath('//div[@class="TRS_Editor"]/p/text()').extract())
         elif sel.xpath('//font[@class="font_txt_zw"]/p/text()'):
