@@ -307,6 +307,91 @@ class JxcbwNewsSpider(CrawlSpider):
         item['comments'] = comments
         yield item
 
+#大江网
+class NewsSpider(CrawlSpider):
+    name = "jxcn_news_spider"
+    allowed_domains = ['jxcn.cn','jxnews.com.cn']
+    start_urls = ['http://www.jxcn.cn/']
+    # http: // ml.jxcn.cn / system / 2017 / 11 / 02 / 016526588.shtml
+    #http: // jt.jxcn.cn / system / 2013 / 11 / 13 / 012794201.shtml
+    url_pattern = 'http://(.*?)/(2017)/(\d{2})/(\d{2})/(\d+).shtml'
+    rules = [
+        Rule(LxmlLinkExtractor(allow=[url_pattern]), callback='parse_news', follow=True)
+    ]
+
+    def parse_news(self, response):
+        sel = Selector(response)
+        pattern = re.match(self.url_pattern, str(response.url))
+        source = 'jxcn.cn'
+        url = response.url
+        newsId = pattern.group(5)
+        date = pattern.group(2) + '/' + pattern.group(3) + '/' + pattern.group(4)
+        if sel.xpath('//span[@id="pubtime_baidu"]/text()'):
+            time = ListCombiner(sel.xpath('//span[@id="pubtime_baidu"]/text()').extract())
+        elif sel.xpath('//span[@class="left"]/text()'):
+            time = sel.xpath('//span[@class="left"]/text()').extract()[-1]
+        else:
+            time = "unknown"
+
+        if sel.xpath('//div[@class="biaoti1"]/h1/text()'):
+            title = sel.xpath('//div[@class="biaoti1"]/h1/text()').extract()
+        elif sel.xpath('//div[@class="title"]/text()'):
+            title = sel.xpath('//div[@class="title"]/text()').extract()
+        elif sel.xpath('//div[@class="BiaoTi"]/text()'):
+            title = sel.xpath('//div[@class="BiaoTi"]/text()').extract()
+        elif sel.xpath('//div[@class="cont_adtop"]/h1/text()'):
+            title = sel.xpath('//div[@class="cont_adtop"]/h1/text()').extract()
+        else:
+            title = 'unknown'
+
+        if sel.xpath('//div[@class="Content"]/p/text()'):
+            contents = ListCombiner(sel.xpath('//div[@class="Content"]/p/text()').extract())
+        elif sel.xpath('//div[@class="font1"]/p/text()'):
+            contents = ListCombiner(sel.xpath('//div[@class="font1"]/p/text()').extract())
+        elif sel.xpath('//div[@class="text_w650 p14"]/p/text()'):
+            contents = ListCombiner(sel.xpath('//div[@class="text_w650 p14"]/p/text()').extract())
+        elif sel.xpath('//font[@id="Zoom"]/p/text()'):
+            contents = ListCombiner(sel.xpath('//font[@id="Zoom"]/p/text()').extract())
+        elif sel.xpath('//font[@id="Zoom"]/div/p/text()'):
+            contents = ListCombiner(sel.xpath('//font[@id="Zoom"]/div/p/text()').extract())
+        else:
+            contents = "unknown"
+        item = NewsItem()
+        item['source'] = source
+        item['time'] = time
+        item['date'] = date
+        item['contents'] = contents
+        item['title'] = title
+        item['url'] = url
+        item['newsId'] = newsId
+        item['comments'] = 0
+        yield item
+
+
+
+
+
+        # if sel.xpath('//div[@class="biaoti1"]/h1/text()').extract():
+        #     title = sel.xpath('//div[@class="biaoti1"]/h1/text()').extract()
+        #     contents = ListCombiner(sel.xpath('//div[@class="font1"]/p/text()').extract())
+        #     date = sel.xpath('//*[@id="pubtime_baidu"]').extract()[0][25:35]
+        #     time = sel.xpath('//*[@id="pubtime_baidu"]').extract()[0][35:44]
+        # elif sel.xpath('//div[@id="articleTitle"]/text()').extract():
+        #     title = sel.xpath('div[@id="articleTitle"]/text()').extract()
+        #     contents = ListCombiner(sel.xpath('//*[@id="Zoom"]/p/text()').extract())
+        #     date = sel.xpath('//*[@id="pubtime_baidu"]').extract()[0][25:35]
+        #     time = sel.xpath('//*[@id="pubtime_baidu"]').extract()[0][35:44]
+        #
+        # elif sel.xpath('div[@class="title"]/text()').extract():
+        #     title = sel.xpath('//div[@class="title"]/text()').extract()
+        #     contents = ListCombiner(sel.xpath('//*[@id="Zoom"]/p/text()').extract())
+        #     date = sel.xpath('//*[@id="pubtime_baidu"]/span').extract()[0][25:35]
+        #     time = sel.xpath('//*[@id="pubtime_baidu"]/span').extract()[0][35:44]
+        #     # if title:
+
+
+
+
 #新气象  successful
 class ZgqxbNewsSpider(CrawlSpider):
     name = "zgqxb_news_spider"
