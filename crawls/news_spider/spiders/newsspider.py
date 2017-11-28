@@ -22,7 +22,27 @@ def ListCombiner(lst):
         string += e
     return string.replace(' ','').replace('\n','').replace('\t','')\
         .replace('\xa0','').replace('\u3000','').replace('\r','')
+#命中函数
+key_list=['Æøºò','ÆøÏó','œµË®','ºéË®','žßÎÂ','»ýÑ©','Æøºò±ä»¯','Žó·ç','Àä¿ÕÆø','À×µç','Á¬ÒõÓê','œµÓê','Ô€±š','ÔÖºŠ',
+          '»·Ÿ³','ŽóÆø','¿ÕÆø','ÎÛÈŸ','PM2.5','œ­Î÷ÆøÏóŸÖ','ÆøÏóŸÖ','·çËÙ','ÆøÏóÌš','ÆøÏóÔÖºŠ','ÆøÏóÌõŒþ','ÌìÆø',
+          'Îíö² ','Îí','ö²','Àä','ÈÈ','Œà²â','ÄàÊ¯Á÷','žÉºµ','Ìš·ç','Ëª¶³','œá±ù','±ù±¢','ÄàÊ¯Á÷','É­ÁÖ','Ô€±š','Ô€Ÿ¯',
+          'ÔÖºŠ·çÏÕ','Æøºò±ä»¯', 'ÈË¹€œµÓê','ÈË¹€ÔöÓê','Œ«¶ËÌìÆø','AQI','PM10','¶ò¶ûÄáÅµ','Êª¶È','·çÏò','À­ÄáÄÈ',
+          'ŽóÆø×ÔŸ»ÄÜÁŠ', 'Ð¡·çÈÕÊý','œ­Î÷Ê¡ÆøÏó²¿ÃÅ','ŽóÆøÌœ²âÖÐÐÄ' ,'ÆøÏóÑ§»á','ÔÖºŠ·ÀÓù','ÆøÏó¿ÆÑ§','ÆøºòÖÐÐÄ',
+          'ÆøÏóÐÅÏ¢']
+import jieba
 
+def Hit(text):
+    count=0
+    text= "".join(re.findall(u'[\u4e00-\u9fff]+',text))
+    a=jieba.cut(text)
+    text = list(set(a))
+    for k in key_list:
+        if k in text:
+            count+=1
+    if count>4:
+        return True
+    else:
+        return False
 
 class NeteaseNewsSpider(CrawlSpider):
     website_possible_httpstatus_list = [404, 403, 301]
@@ -149,9 +169,83 @@ class SinaNewsSpider(CrawlSpider):
         return item
 
 
+# class TencentNewsSpider(CrawlSpider):
+#     name = 'tencent_news_spider'
+#     # allowed_domains = ['news.qq.com']
+#     start_urls = ['http://news.qq.com']
+#     # http://news.qq.com/a/20170825/026956.htm
+#     url_pattern = r'(.*)/a/(\d{8})/(\d+)\.htm'
+#     rules = [
+#         Rule(LxmlLinkExtractor(allow=[url_pattern]), callback='parse_news', follow=True)
+#     ]
+#
+#     def parse_news(self, response):
+#         sel = Selector(response)
+#         if sel.xpath('//*[@id="Main-Article-QQ"]/div/div[1]/div[1]/div[1]/h1/text()'):
+#             title = sel.xpath('//*[@id="Main-Article-QQ"]/div/div[1]/div[1]/div[1]/h1/text()').extract()[0]
+#         elif sel.xpath('//*[@id="C-Main-Article-QQ"]/div/div[1]/div[1]/div[1]/h1/text()'):
+#             title = sel.xpath('//*[@id="C-Main-Article-QQ"]/div/div[1]/div[1]/div[1]/h1/text()').extract()[0]
+#         elif sel.xpath('//*[@id="ArticleTit"]/text()'):
+#             title = sel.xpath('//*[@id="ArticleTit"]/text()').extract()[0]
+#         else:
+#             title = 'unknown'
+#         pattern = re.match(self.url_pattern, str(response.url))
+#         source = pattern.group(1)
+#         date = pattern.group(2)
+#         date = date[0:4] + '/' + date[4:6] + '/' + date[6:]
+#         newsId = pattern.group(3)
+#         url = response.url
+#         if sel.xpath('//*[@id="Main-Article-QQ"]/div/div[1]/div[1]/div[1]/div/div[1]/span[3]/text()'):
+#             time_ = sel.xpath('//*[@id="Main-Article-QQ"]/div/div[1]/div[1]/div[1]/div/div[1]/span[3]/text()').extract()[0]
+#         else:
+#             time_ = 'unknown'
+#         contents = ListCombiner(sel.xpath('//p/text()').extract()[:-8])
+#
+#         if response.xpath('//*[@id="Main-Article-QQ"]/div/div[1]/div[2]/script[2]/text()'):
+#             cmt = response.xpath('//*[@id="Main-Article-QQ"]/div/div[1]/div[2]/script[2]/text()').extract()[0]
+#             if re.findall(r'cmt_id = (\d*);', cmt):
+#                 cmt_id = re.findall(r'cmt_id = (\d*);', cmt)[0]
+#                 comment_url = 'http://coral.qq.com/article/{}/comment?commentid=0&reqnum=1&tag=&callback=mainComment&_=1389623278900'.format(cmt_id)
+#                 yield Request(comment_url, self.parse_comment, meta={'source': source,
+#                                                                      'date': date,
+#                                                                      'newsId': newsId,
+#                                                                      'url': url,
+#                                                                      'title': title,
+#                                                                      'contents': contents,
+#                                                                      'time': time_
+#                                                                      })
+#             else:
+#                 item = NewsItem()
+#                 item['source'] = source
+#                 item['time'] = time_
+#                 item['date'] = date
+#                 item['contents'] = contents
+#                 item['title'] = title
+#                 item['url'] = url
+#                 item['newsId'] = newsId
+#                 item['comments'] = 0
+#                 return item
+#
+#     def parse_comment(self, response):
+#         if re.findall(r'"total":(\d*)\,', response.text):
+#             comments = re.findall(r'"total":(\d*)\,', response.text)[0]
+#         else:
+#             comments = 0
+#         item = NewsItem()
+#         item['source'] = response.meta['source']
+#         item['time'] = response.meta['time']
+#         item['date'] = response.meta['date']
+#         item['contents'] = response.meta['contents']
+#         item['title'] = response.meta['title']
+#         item['url'] = response.meta['url']
+#         item['newsId'] = response.meta['newsId']
+#         item['comments'] = comments
+#         return item
+
+#修改后的腾讯新闻 successful
 class TencentNewsSpider(CrawlSpider):
     name = 'tencent_news_spider'
-    # allowed_domains = ['news.qq.com']
+    allowed_domains = ['news.qq.com']
     start_urls = ['http://news.qq.com']
     # http://news.qq.com/a/20170825/026956.htm
     url_pattern = r'(.*)/a/(\d{8})/(\d+)\.htm'
@@ -161,12 +255,14 @@ class TencentNewsSpider(CrawlSpider):
 
     def parse_news(self, response):
         sel = Selector(response)
-        if sel.xpath('//*[@id="Main-Article-QQ"]/div/div[1]/div[1]/div[1]/h1/text()'):
-            title = sel.xpath('//*[@id="Main-Article-QQ"]/div/div[1]/div[1]/div[1]/h1/text()').extract()[0]
-        elif sel.xpath('//*[@id="C-Main-Article-QQ"]/div/div[1]/div[1]/div[1]/h1/text()'):
-            title = sel.xpath('//*[@id="C-Main-Article-QQ"]/div/div[1]/div[1]/div[1]/h1/text()').extract()[0]
-        elif sel.xpath('//*[@id="ArticleTit"]/text()'):
-            title = sel.xpath('//*[@id="ArticleTit"]/text()').extract()[0]
+        # if sel.xpath('//div[@class="qq_article"]/div[@class="hd"]/h1/text()'):
+        #     title = sel.xpath('//div[@class="qq_article"]/div[@class="hd"]/h1/text()').extract()[0]
+        if sel.xpath('//div[@class="hd"]/h1/text()'):
+            title = sel.xpath('//div[@class="hd"]/h1/text()').extract()[0]
+        # elif sel.xpath('//div[@id="ArticleTit"]/text()'):
+        #     title = sel.xpath('//div[@id="ArticleTit"]/text()').extract()[0]
+        elif sel.xpath('//div[@class="LEFT"]/h1/text()'):
+            title = sel.xpath('//div[@class="LEFT"]/h1/text()').extract()
         else:
             title = 'unknown'
         pattern = re.match(self.url_pattern, str(response.url))
@@ -175,52 +271,76 @@ class TencentNewsSpider(CrawlSpider):
         date = date[0:4] + '/' + date[4:6] + '/' + date[6:]
         newsId = pattern.group(3)
         url = response.url
-        if sel.xpath('//*[@id="Main-Article-QQ"]/div/div[1]/div[1]/div[1]/div/div[1]/span[3]/text()'):
-            time_ = sel.xpath('//*[@id="Main-Article-QQ"]/div/div[1]/div[1]/div[1]/div/div[1]/span[3]/text()').extract()[0]
+
+        if sel.xpath('//div[@class="a-src-time"]/a/text()'):
+            time_ = ListCombiner(sel.xpath('//div[@class="a-src-time"]/a/text()').extract()[-1])
+        elif sel.xpath('//span[@class="a_time"]/text()'):
+            time_ = sel.xpath('//span[@class="a_time"]/text()').extract()
+        elif sel.xpath('//span[@class="article-time"]/text()'):
+            time_ = sel.xpath('//span[@class="article-time"]/text()').extract()
         else:
             time_ = 'unknown'
-        contents = ListCombiner(sel.xpath('//p/text()').extract()[:-8])
 
-        if response.xpath('//*[@id="Main-Article-QQ"]/div/div[1]/div[2]/script[2]/text()'):
-            cmt = response.xpath('//*[@id="Main-Article-QQ"]/div/div[1]/div[2]/script[2]/text()').extract()[0]
-            if re.findall(r'cmt_id = (\d*);', cmt):
-                cmt_id = re.findall(r'cmt_id = (\d*);', cmt)[0]
-                comment_url = 'http://coral.qq.com/article/{}/comment?commentid=0&reqnum=1&tag=&callback=mainComment&_=1389623278900'.format(cmt_id)
-                yield Request(comment_url, self.parse_comment, meta={'source': source,
-                                                                     'date': date,
-                                                                     'newsId': newsId,
-                                                                     'url': url,
-                                                                     'title': title,
-                                                                     'contents': contents,
-                                                                     'time': time_
-                                                                     })
-            else:
-                item = NewsItem()
-                item['source'] = source
-                item['time'] = time_
-                item['date'] = date
-                item['contents'] = contents
-                item['title'] = title
-                item['url'] = url
-                item['newsId'] = newsId
-                item['comments'] = 0
-                return item
-
-    def parse_comment(self, response):
-        if re.findall(r'"total":(\d*)\,', response.text):
-            comments = re.findall(r'"total":(\d*)\,', response.text)[0]
+        if sel.xpath('//p/text()'):
+            contents = ListCombiner(sel.xpath('//p/text()').extract())
+        elif sel.xpath('//div[@id="infoTxt"]/p/text()'):
+            contents = ListCombiner(sel.xpath('//div[@id="infoTxt"]/p/text()').extract())
         else:
-            comments = 0
+            contents = 'unknown'
         item = NewsItem()
-        item['source'] = response.meta['source']
-        item['time'] = response.meta['time']
-        item['date'] = response.meta['date']
-        item['contents'] = response.meta['contents']
-        item['title'] = response.meta['title']
-        item['url'] = response.meta['url']
-        item['newsId'] = response.meta['newsId']
-        item['comments'] = comments
+        item['source'] = source
+        item['time'] = time_
+        item['date'] = date
+        item['contents'] = contents
+        item['title'] = title
+        item['url'] = url
+        item['newsId'] = newsId
+        item['comments'] = 0
         return item
+
+
+        # if response.xpath('//*[@id="Main-Article-QQ"]/div/div[1]/div[2]/script[2]/text()'):
+        #     cmt = response.xpath('//*[@id="Main-Article-QQ"]/div/div[1]/div[2]/script[2]/text()').extract()[0]
+        #     if re.findall(r'cmt_id = (\d*);', cmt):
+        #         cmt_id = re.findall(r'cmt_id = (\d*);', cmt)[0]
+        #         comment_url = 'http://coral.qq.com/article/{}/comment?commentid=0&reqnum=1&tag=&callback=mainComment&_=1389623278900'.format(cmt_id)
+        #         yield Request(comment_url, self.parse_comment, meta={'source': source,
+        #                                                              'date': date,
+        #                                                              'newsId': newsId,
+        #                                                              'url': url,
+        #                                                              'title': title,
+        #                                                              'contents': contents,
+        #                                                              'time': time_
+        #                                                              })
+        #     else:
+        #         item = NewsItem()
+        #         item['source'] = source
+        #         item['time'] = time_
+        #         item['date'] = date
+        #         item['contents'] = contents
+        #         item['title'] = title
+        #         item['url'] = url
+        #         item['newsId'] = newsId
+        #         item['comments'] = 0
+        #         return item
+
+    # def parse_comment(self, response):
+    #     if re.findall(r'"total":(\d*)\,', response.text):
+    #         comments = re.findall(r'"total":(\d*)\,', response.text)[0]
+    #     else:
+    #         comments = 0
+    #     item = NewsItem()
+    #     item['source'] = response.meta['source']
+    #     item['time'] = response.meta['time']
+    #     item['date'] = response.meta['date']
+    #     item['contents'] = response.meta['contents']
+    #     item['title'] = response.meta['title']
+    #     item['url'] = response.meta['url']
+    #     item['newsId'] = response.meta['newsId']
+    #     item['comments'] = comments
+    #     return item
+
+
 
 #wirted by myself 搜狐ｏｋ
 class SohuNewsSpider(CrawlSpider):
